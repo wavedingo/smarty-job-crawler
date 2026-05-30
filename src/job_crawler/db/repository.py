@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from job_crawler.models import Job, JobStatus, RemoteStatus, ScoringAdjustment, SearchTerm
@@ -164,7 +164,10 @@ def init_db(db_path: Path | None = None) -> None:
 # ---------------------------------------------------------------------------
 
 def upsert_job(job: Job, db_path: Path | None = None) -> bool:
-    """Insert job. Skip (return False) if job_id already exists. Return True if inserted."""
+    """INSERT OR IGNORE — does not update existing records.
+
+    Returns True if inserted, False if the job_id already exists.
+    """
     if db_path is None:
         db_path = get_db_path()
     row = _job_to_row(job)
@@ -202,7 +205,7 @@ def get_jobs(
     status: str | None = None,
     source_site: str | None = None,
     min_score: float = 0.0,
-    date: str | None = None,
+    discovered_date: str | None = None,
     limit: int = 100,
     offset: int = 0,
     db_path: Path | None = None,
@@ -220,9 +223,9 @@ def get_jobs(
     if source_site:
         conditions.append("source_site = :source_site")
         params["source_site"] = source_site
-    if date:
-        conditions.append("discovered_date = :date")
-        params["date"] = date
+    if discovered_date:
+        conditions.append("discovered_date = :discovered_date")
+        params["discovered_date"] = discovered_date
 
     where = " AND ".join(conditions)
     sql = f"""
@@ -258,7 +261,7 @@ def update_job_status(job_id: str, status: str, db_path: Path | None = None) -> 
     try:
         conn.execute(
             "UPDATE jobs SET status = ?, updated_at = ? WHERE job_id = ?",
-            (status, datetime.utcnow().isoformat(), job_id),
+            (status, datetime.now(timezone.utc).isoformat(), job_id),
         )
         conn.commit()
     finally:
@@ -282,7 +285,7 @@ def record_feedback(
     try:
         conn.execute(
             "INSERT INTO feedback (job_id, feedback_type, notes, created_at) VALUES (?, ?, ?, ?)",
-            (job_id, feedback_type, notes, datetime.utcnow().isoformat()),
+            (job_id, feedback_type, notes, datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
     finally:
@@ -314,12 +317,12 @@ def upsert_scoring_adjustment(adj: ScoringAdjustment, db_path: Path | None = Non
                 """
                 UPDATE scoring_adjustments
                 SET signal_type=?, signal_value=?, multiplier=?,
-                    source_feedback_type=?, created_at=?
+                    source_feedback_type=?
                 WHERE id=?
                 """,
                 (
                     adj.signal_type, adj.signal_value, adj.multiplier,
-                    adj.source_feedback_type, adj.created_at.isoformat(), adj.id,
+                    adj.source_feedback_type, adj.id,
                 ),
             )
         else:
@@ -351,7 +354,7 @@ def start_run(db_path: Path | None = None) -> int:
     try:
         cursor = conn.execute(
             "INSERT INTO job_runs (started_at, status) VALUES (?, 'running')",
-            (datetime.utcnow().isoformat(),),
+            (datetime.now(timezone.utc).isoformat(),),
         )
         conn.commit()
         return cursor.lastrowid
@@ -387,7 +390,7 @@ def complete_run(
             WHERE id = ?
             """,
             (
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
                 jobs_fetched, jobs_new, jobs_exact_dup, jobs_fuzzy_dup,
                 json.dumps(sources_searched), terms_searched, run_id,
             ),
@@ -410,7 +413,7 @@ def fail_run(run_id: int, error: str, db_path: Path | None = None) -> None:
                 error_message = ?
             WHERE id = ?
             """,
-            (datetime.utcnow().isoformat(), error, run_id),
+            (datetime.now(timezone.utc).isoformat(), error, run_id),
         )
         conn.commit()
     finally:
@@ -552,15 +555,17 @@ def record_job_term_matches(
     """Record that these jobs were found by these terms in this run."""
     if db_path is None:
         db_path = get_db_path()
-    now = datetime.utcnow().isoformat()
     conn = get_connection(db_path)
     try:
-        for job_id in job_ids:
-            for term_id in term_ids:
-                conn.execute(
-                    "INSERT OR IGNORE INTO job_term_matches (job_id, term_id, run_id, created_at) VALUES (?, ?, ?, ?)",
-                    (job_id, term_id, run_id, now),
-                )
+        rows = [
+            (job_id, term_id, run_id, datetime.now(timezone.utc).isoformat())
+            for job_id in job_ids
+            for term_id in term_ids
+        ]
+        conn.executemany(
+            "INSERT OR IGNORE INTO job_term_matches (job_id, term_id, run_id, created_at) VALUES (?,?,?,?)",
+            rows,
+        )
         conn.commit()
     finally:
         conn.close()
@@ -614,7 +619,7 @@ def update_term_after_run(
                 next_run_date = ?
             WHERE id = ?
             """,
-            (new_times_run, new_jobs_found, datetime.utcnow().isoformat(), next_run, term_id),
+            (new_times_run, new_jobs_found, datetime.now(timezone.utc).isoformat(), next_run, term_id),
         )
         conn.commit()
     finally:

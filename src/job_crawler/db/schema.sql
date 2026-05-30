@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS sources (
 
 CREATE TABLE IF NOT EXISTS search_terms (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    term                TEXT    NOT NULL,
+    term                TEXT    NOT NULL UNIQUE,
     category            TEXT,
     is_priority         INTEGER DEFAULT 0,
     is_boolean          INTEGER DEFAULT 0,
@@ -105,7 +105,8 @@ CREATE TABLE IF NOT EXISTS job_term_matches (
     job_id      TEXT    NOT NULL REFERENCES jobs(job_id),
     term_id     INTEGER NOT NULL REFERENCES search_terms(id),
     run_id      INTEGER NOT NULL REFERENCES job_runs(id),
-    created_at  TEXT    NOT NULL
+    created_at  TEXT    NOT NULL,
+    UNIQUE (job_id, term_id, run_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_jtm_job_id ON job_term_matches(job_id);
