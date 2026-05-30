@@ -1,12 +1,17 @@
+import logging
 import httpx
 from datetime import datetime, timezone
 from job_crawler.models import RawJob
 from .base import BaseAdapter
 
+logger = logging.getLogger(__name__)
+
 
 class LeverAdapter(BaseAdapter):
     name = "lever"
-    _cache: dict[str, list[RawJob]] = {}
+
+    def __init__(self):
+        self._cache: dict[str, list[RawJob]] = {}
 
     async def fetch(self, term: str, config: dict, client: httpx.AsyncClient) -> list[RawJob]:
         return []
@@ -22,12 +27,16 @@ class LeverAdapter(BaseAdapter):
         url = f"https://api.lever.co/v0/postings/{company_slug}?mode=json"
 
         try:
-            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=30.0,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; job-crawler/1.0)"},
+                follow_redirects=True,
+            ) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 data = response.json()
         except Exception as e:
-            print(f"[lever:{company_slug}] Error: {e}")
+            logger.warning("[lever:%s] Error: %s", company_slug, e)
             return []
 
         results = []

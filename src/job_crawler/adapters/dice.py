@@ -1,10 +1,15 @@
+# NOTE: Uses undocumented internal API endpoint — may break without warning
+import logging
 import httpx
 from job_crawler.models import RawJob
 from .base import BaseAdapter
 
+logger = logging.getLogger(__name__)
+
 
 class DiceAdapter(BaseAdapter):
     name = "dice"
+    tier = 2
 
     async def fetch(self, term: str, config: dict, client: httpx.AsyncClient) -> list[RawJob]:
         page_size = config.get("results_per_query", 20)
@@ -24,7 +29,7 @@ class DiceAdapter(BaseAdapter):
             response.raise_for_status()
             data = response.json()
         except Exception as e:
-            print(f"[dice] Error for '{term}': {e}")
+            logger.warning("[dice] Error for '%s': %s", term, e)
             return []
 
         results = []

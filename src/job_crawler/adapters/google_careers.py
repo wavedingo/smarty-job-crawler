@@ -1,6 +1,9 @@
+import logging
 import httpx
 from job_crawler.models import RawJob
 from .base import BaseAdapter
+
+logger = logging.getLogger(__name__)
 
 
 class GoogleCareersAdapter(BaseAdapter):
@@ -26,7 +29,7 @@ class GoogleCareersAdapter(BaseAdapter):
             response.raise_for_status()
             data = response.json()
         except Exception as e:
-            print(f"[google_careers] Unavailable for '{term}': {e}")
+            logger.warning("[google_careers] Unavailable for '%s': %s", term, e)
             return []
 
         results = []
@@ -45,7 +48,8 @@ class GoogleCareersAdapter(BaseAdapter):
                         "date_posted": job.get("date_posted", ""),
                     },
                 ))
-            except Exception:
+            except Exception as e:
+                logger.debug("google_careers: skipping malformed entry: %s", e)
                 continue
 
         return results

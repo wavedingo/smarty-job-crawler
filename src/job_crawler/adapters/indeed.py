@@ -1,9 +1,12 @@
 import re
+import logging
 import feedparser
 from urllib.parse import quote_plus
 import httpx
 from job_crawler.models import RawJob
 from .base import BaseAdapter
+
+logger = logging.getLogger(__name__)
 
 SALARY_RE = re.compile(
     r'\$[\d,]+(?:K)?(?:\s*[-–]\s*\$[\d,]+(?:K)?)?'
@@ -31,7 +34,7 @@ class IndeedAdapter(BaseAdapter):
             response = await client.get(url)
             response.raise_for_status()
         except Exception as e:
-            print(f"[indeed] HTTP error for '{term}': {e}")
+            logger.warning("[indeed] HTTP error for '%s': %s", term, e)
             return []
 
         feed = feedparser.parse(response.text)

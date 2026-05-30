@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar
 import asyncio
+import logging
 import httpx
 from job_crawler.models import RawJob
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAdapter(ABC):
@@ -56,7 +59,8 @@ class BaseAdapter(ABC):
                     results.extend(await self.fetch(term, config, client))
                 except Exception as e:
                     # Log but continue
-                    print(f"[{self.name}] Error fetching '{term}': {e}")
+                    log = logger.warning if self.tier == 1 else logger.debug
+                    log("[%s] Error fetching '%s': %s", self.name, term, e)
                 delay = config.get("delay_seconds", 1.0)
                 if delay > 0:
                     await asyncio.sleep(delay)

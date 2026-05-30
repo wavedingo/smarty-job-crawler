@@ -1,11 +1,16 @@
+import logging
 import httpx
 from job_crawler.models import RawJob
 from .base import BaseAdapter
 
+logger = logging.getLogger(__name__)
+
 
 class GreenhouseAdapter(BaseAdapter):
     name = "greenhouse"
-    _cache: dict[str, list[RawJob]] = {}  # board_slug → results for this run
+
+    def __init__(self):
+        self._cache: dict[str, list[RawJob]] = {}
 
     async def fetch(self, term: str, config: dict, client: httpx.AsyncClient) -> list[RawJob]:
         # Not used directly — all fetching in fetch_all
@@ -23,12 +28,16 @@ class GreenhouseAdapter(BaseAdapter):
         url = f"https://boards-api.greenhouse.io/v1/boards/{board_slug}/jobs?content=true"
 
         try:
-            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=30.0,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; job-crawler/1.0)"},
+                follow_redirects=True,
+            ) as client:
                 response = await client.get(url)
                 response.raise_for_status()
                 data = response.json()
         except Exception as e:
-            print(f"[greenhouse:{board_slug}] Error: {e}")
+            logger.warning("[greenhouse:%s] Error: %s", board_slug, e)
             return []
 
         results = []

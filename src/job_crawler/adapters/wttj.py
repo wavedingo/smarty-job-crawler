@@ -1,6 +1,9 @@
+import logging
 import httpx
 from job_crawler.models import RawJob
 from .base import BaseAdapter
+
+logger = logging.getLogger(__name__)
 
 
 class WelcomeToTheJungleAdapter(BaseAdapter):
@@ -20,7 +23,7 @@ class WelcomeToTheJungleAdapter(BaseAdapter):
             response.raise_for_status()
             data = response.json()
         except Exception as e:
-            print(f"[wttj] Unavailable for '{term}': {e}")
+            logger.warning("[wttj] Unavailable for '%s': %s", term, e)
             return []
 
         results = []
@@ -38,7 +41,8 @@ class WelcomeToTheJungleAdapter(BaseAdapter):
                     search_term=term,
                     raw_data=job,
                 ))
-            except Exception:
+            except Exception as e:
+                logger.debug("wttj: skipping malformed entry: %s", e)
                 continue  # skip malformed entries
 
         return results
