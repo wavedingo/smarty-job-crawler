@@ -1,0 +1,112 @@
+relevance_weights:
+  title_exact_match: 30
+  title_partial_match: 15
+  keyword_density: 25
+  seniority_match: 20
+  domain_fit: 15
+  negative_signal_per_hit: -5
+  negative_signal_cap: -15
+
+seniority_keywords:
+  - "VP"
+  - "Vice President"
+  - "Director"
+  - "Head of"
+  - "General Manager"
+  - "GM"
+  - "Executive"
+  - "Chief"
+  - "SVP"
+  - "EVP"
+  - "C-Suite"
+
+domain_buckets:
+  ecommerce:
+    weight: 1.0
+    keywords:
+      - ecommerce
+      - e-commerce
+      - DTC
+      - direct-to-consumer
+      - marketplace
+      - omnichannel
+      - retail media
+      - digital commerce
+      - Amazon
+      - Walmart
+      - Wayfair
+      - Target
+      - Shopify
+      - online retail
+      - digital shelf
+  media_podcast:
+    weight: 1.0
+    keywords:
+      - podcast
+      - audio
+      - creator economy
+      - content partnerships
+      - branded content
+      - digital media
+      - streaming
+      - media network
+      - podcast monetization
+      - audio partnerships
+  partnerships_bizdev:
+    weight: 1.0
+    keywords:
+      - strategic partnerships
+      - business development
+      - channel partnerships
+      - revenue partnerships
+      - enterprise partnerships
+      - commercial partnerships
+  brand_marketing:
+    weight: 0.8
+    keywords:
+      - brand strategy
+      - go-to-market
+      - growth marketing
+      - performance marketing
+      - integrated marketing
+      - customer acquisition
+      - brand development
+  retail_media:
+    weight: 1.0
+    keywords:
+      - retail media
+      - commerce media
+      - Amazon Ads
+      - Walmart Connect
+      - shopper marketing
+      - marketplace growth
+      - digital merchandising
+
+negative_keywords:
+  - junior
+  - associate
+  - coordinator
+  - intern
+  - entry-level
+  - entry level
+  - software engineer
+  - data scientist
+  - machine learning engineer
+  - ML engineer
+  - staffing
+  - recruiting
+  - temp role
+
+quality_weights:
+  salary_present: 20
+  description_length_full: 20
+  description_length_partial: 10
+  direct_ats_link: 15
+  fresh_posting_14d: 15
+  fresh_posting_30d: 8
+  low_duplicate_risk: 15
+  known_company: 15
+
+location:
+  neutral: true
+  preferred_remote_statuses: []

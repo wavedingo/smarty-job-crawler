@@ -1,0 +1,133 @@
+priority_terms:
+  - "Head of eCommerce"
+  - "VP eCommerce"
+  - "Director of Digital Commerce"
+  - "General Manager, eCommerce"
+  - "Director of Strategic Partnerships"
+  - "Director of Retail Media Strategy"
+  - "Podcast Network Executive"
+  - "Head of Content Partnerships"
+  - "Director of Marketplace Growth"
+  - "VP Growth / Revenue Partnerships"
+
+boolean_searches:
+  - query: '("VP eCommerce" OR "Head of eCommerce" OR "Director of eCommerce") AND ("P&L" OR "omnichannel" OR "marketplace")'
+    enabled: true
+  - query: '("Digital Commerce" OR "eCommerce") AND ("Amazon" OR "Walmart" OR "Target" OR "Wayfair") AND ("Director" OR "VP")'
+    enabled: true
+  - query: '("Strategic Partnerships" OR "Business Development") AND ("podcast" OR "audio" OR "creator economy" OR "digital media")'
+    enabled: true
+  - query: '("Retail Media" OR "Commerce Media" OR "Marketplace Growth") AND ("Director" OR "Head" OR "VP")'
+    enabled: true
+  - query: '("Podcast Monetization" OR "Podcast Ad Sales" OR "Audio Partnerships") AND ("Director" OR "VP" OR "Head")'
+    enabled: true
+  - query: '("Brand Strategy" OR "Go-to-Market" OR "Growth Marketing") AND ("retail" OR "consumer products" OR "DTC")'
+    enabled: true
+
+categories:
+  executive_leadership:
+    enabled: true
+    terms:
+      - "eCommerce Executive"
+      - "VP eCommerce"
+      - "Director of eCommerce"
+      - "Head of eCommerce"
+      - "Digital Commerce Leader"
+      - "Omnichannel Strategy Director"
+      - "VP Digital Commerce"
+      - "General Manager eCommerce"
+      - "eCommerce Business Unit Leader"
+      - "DTC General Manager"
+      - "Head of Online Retail"
+      - "Digital Business Lead"
+      - "Retail Digital Transformation Leader"
+  retail_marketplace:
+    enabled: true
+    terms:
+      - "Amazon Account Director"
+      - "Amazon Marketplace Director"
+      - "Walmart Marketplace Director"
+      - "Retail Marketplace Strategy"
+      - "eCommerce Channel Director"
+      - "National Account Manager eCommerce"
+      - "Strategic Account Director Retail"
+      - "Retail Partnerships Director"
+      - "Wholesale eCommerce Director"
+      - "Mass Retail Account Director"
+      - "Key Account Director eCommerce"
+      - "Online Retail Sales Director"
+      - "Retail Channel Strategy"
+  brand_marketing:
+    enabled: true
+    terms:
+      - "VP Marketing"
+      - "Director of Growth Marketing"
+      - "Brand Strategy Director"
+      - "Director of Digital Marketing"
+      - "Head of Brand Strategy"
+      - "Growth Strategy Lead"
+      - "Integrated Marketing Director"
+      - "Performance Marketing Director"
+      - "Customer Acquisition Director"
+      - "Marketing Partnerships Director"
+      - "Go-to-Market Strategy Director"
+      - "Brand Development Director"
+  media_podcast:
+    enabled: true
+    terms:
+      - "Podcast Network Executive"
+      - "Podcast Ad Sales Director"
+      - "Creator Partnerships Director"
+      - "Head of Podcast Growth"
+      - "Podcast Monetization Lead"
+      - "Audio Partnerships Director"
+      - "Content Partnerships Director"
+      - "Media Partnerships Director"
+      - "Executive Producer Podcast"
+      - "Branded Content Director"
+      - "Digital Media General Manager"
+      - "Creator Economy Partnerships"
+      - "Audience Development Director"
+      - "Content Strategy Director"
+  partnerships_bizdev:
+    enabled: true
+    terms:
+      - "Business Development Director"
+      - "Strategic Partnerships Director"
+      - "Channel Partnerships Director"
+      - "Revenue Partnerships Lead"
+      - "Commercial Partnerships Director"
+      - "Director of Sales Strategy"
+      - "VP Business Development"
+      - "Partnerships Lead Retail Media"
+      - "Brand Partnerships Director"
+      - "Enterprise Partnerships Director"
+      - "Retail Media Partnerships"
+  product_startup:
+    enabled: true
+    terms:
+      - "Product Marketing Director"
+      - "Product Strategy Lead"
+      - "Go-to-Market Lead"
+      - "Startup Advisor Operations"
+      - "Venture Studio Operator"
+      - "Commercialization Lead"
+      - "Market Development Director"
+      - "Digital Product Strategy"
+      - "Platform Partnerships Lead"
+      - "Marketplace Operations Director"
+  retail_media:
+    enabled: true
+    terms:
+      - "Retail Media Network Director"
+      - "Retail Media Strategy"
+      - "Amazon Ads Director"
+      - "Walmart Connect Strategy"
+      - "Commerce Media Director"
+      - "Shopper Marketing Director"
+      - "Digital Shelf Strategy"
+      - "Marketplace Growth Director"
+      - "eCommerce Content Syndication"
+      - "PIM Implementation Lead"
+      - "Digital Merchandising Director"
+      - "Retail Search Strategy"

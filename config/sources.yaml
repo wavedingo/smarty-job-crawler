@@ -1,0 +1,48 @@
+global:
+  max_terms_per_run: 20
+
+sources:
+  indeed:
+    adapter: indeed
+    enabled: true
+    config:
+      results_per_query: 25
+      delay_seconds: 2.0
+      location: ""
+
+  dice:
+    adapter: dice
+    enabled: true
+    config:
+      results_per_query: 20
+      delay_seconds: 1.5
+
+  anthropic:
+    adapter: greenhouse
+    enabled: true
+    config:
+      board_slug: anthropic
+
+  openai:
+    adapter: greenhouse
+    enabled: true
+    config:
+      board_slug: openai
+
+  xai:
+    adapter: lever
+    enabled: true
+    config:
+      company_slug: xai
+
+  welcome_to_the_jungle:
+    adapter: wttj
+    enabled: true
+    config:
+      delay_seconds: 2.0
+
+  google_careers:
+    adapter: google_careers
+    enabled: true
+    config:
+      delay_seconds: 3.0
