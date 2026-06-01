@@ -204,10 +204,17 @@ def give_feedback(
         console.print(f"Valid types: {', '.join(valid)}")
         raise typer.Exit(1)
 
+    from job_crawler.db import repository as repo
+    job = repo.get_job(job_id)
+    if job is None:
+        console.print(f"[red]Job not found:[/red] {job_id!r}")
+        console.print("Use [bold]list-results[/bold] to find valid job IDs.")
+        raise typer.Exit(1)
+
     mgr = FeedbackManager()
     try:
         mgr.record(job_id, feedback_type, notes or None)
-        console.print(f"[green]✓[/green] Feedback recorded: {feedback_type.value} for job {job_id}")
+        console.print(f"[green]✓[/green] Recorded '{feedback_type.value}' for: {job.title} @ {job.company}")
     except Exception as e:
         console.print(f"[red]Error recording feedback:[/red] {e}")
         raise typer.Exit(1)

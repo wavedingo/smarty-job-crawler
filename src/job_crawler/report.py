@@ -8,10 +8,10 @@ from job_crawler.db import repository
 from job_crawler.models import Job
 
 
-def _get_reports_dir() -> Path:
-    """Returns <project_root>/data/reports/, creating it if needed."""
-    db_path = repository.get_db_path()
-    reports_dir = db_path.parent / "reports"
+def _get_reports_dir(db_path: Path | None = None) -> Path:
+    """Returns <db_dir>/reports/, creating it if needed."""
+    db = db_path or repository.get_db_path()
+    reports_dir = db.parent / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
     return reports_dir
 
@@ -112,6 +112,6 @@ def generate_report(
         ]
 
     content = "\n".join(lines)
-    report_path = _get_reports_dir() / f"{date_str}.md"
+    report_path = _get_reports_dir(db_path) / f"{date_str}.md"
     report_path.write_text(content, encoding="utf-8")
     return report_path
