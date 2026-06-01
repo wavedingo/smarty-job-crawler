@@ -1,19 +1,13 @@
 """Normalizer: converts RawJob → Job."""
 
 import hashlib
+import logging
 import re
 from datetime import date, datetime, timezone
 
 from bs4 import BeautifulSoup
 
 from job_crawler.models import Job, RawJob, RemoteStatus
-
-# Salary patterns: $150K, $150,000, $150K-$200K, $150,000 - $200,000 per year
-SALARY_RE = re.compile(
-    r'\$\s*([\d,]+(?:\.\d+)?)\s*[Kk]?\s*(?:[-–]\s*\$?\s*([\d,]+(?:\.\d+)?)\s*[Kk]?)?'
-    r'(?:\s*(?:per year|a year|annually|/yr|/year|USD))?',
-    re.IGNORECASE,
-)
 
 REMOTE_KEYWORDS = {"remote", "work from home", "wfh", "fully remote", "100% remote"}
 HYBRID_KEYWORDS = {"hybrid", "partially remote", "flexible location"}
@@ -79,29 +73,21 @@ class Normalizer:
             updated_at=now,
         )
 
-    def normalize_many(self, raws: list[RawJob]) -> list[Job]:
-        """Normalize a list of RawJobs, skipping any that fail."""
-        import logging
-        jobs = []
+    def normalize_many(self, raws: list[RawJob]) -> list[tuple[Job, str | None]]:
+        """Normalize a list of RawJobs. Returns list of (Job, search_term) pairs, skipping failures."""
+        results = []
         for raw in raws:
             try:
                 job = self.normalize(raw)
                 if job is not None:
-                    # Set salary after construction to avoid init complexity
-                    text = (
-                        f"{raw.raw_data.get('salary_text', '')} "
-                        f"{raw.raw_data.get('salary', '')} "
-                        f"{job.description_clean or ''}"
-                    )
+                    text = f"{raw.raw_data.get('salary_text', '')} {raw.raw_data.get('salary', '')} {job.description_clean or ''}"
                     sal_min, sal_max = self._extract_salary(text)
                     job.salary_min = sal_min
                     job.salary_max = sal_max
-                    jobs.append(job)
+                    results.append((job, raw.search_term))
             except Exception as e:
-                logging.getLogger(__name__).warning(
-                    "Normalization failed for %s: %s", raw.url, e
-                )
-        return jobs
+                logging.getLogger(__name__).warning("Normalization failed for %s: %s", raw.url, e)
+        return results
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -130,36 +116,34 @@ class Normalizer:
         return re.sub(r'\s+', ' ', text).strip()
 
     def _extract_salary(self, text: str) -> tuple[float | None, float | None]:
-        """Extract salary min/max from text. Converts K notation."""
-        matches = SALARY_RE.findall(text)
-        if not matches:
-            return None, None
-
-        for low_str, high_str in matches:
-            low_str = low_str.replace(",", "")
-            high_str = high_str.replace(",", "") if high_str else ""
+        """Extract salary min/max from text. Handles K notation and hourly conversion."""
+        # Match patterns like: $150K, $150k, $150,000, $150K-$200K, $150,000-$200,000
+        pattern = re.compile(
+            r'\$\s*([\d,]+(?:\.\d+)?)\s*([Kk])?\s*(?:[-–]\s*\$?\s*([\d,]+(?:\.\d+)?)\s*([Kk]?))?',
+            re.IGNORECASE
+        )
+        for match in pattern.finditer(text):
+            low_str, low_k, high_str, high_k = match.groups()
 
             try:
-                low = float(low_str)
-                # K notation: value < 1000 and 'k' nearby
-                if low < 1000:
-                    search_window = text[max(0, text.lower().find(low_str[:3])):
-                                         text.lower().find(low_str[:3]) + 10].lower()
-                    if 'k' in search_window:
-                        low *= 1000
-                    elif low < 500:  # Likely hourly — convert to annual
-                        low *= 2080
+                low = float(low_str.replace(",", ""))
+                if low_k:
+                    low *= 1000
+                elif low < 500:
+                    low *= 2080  # Assume hourly, convert to annual
 
-                high = float(high_str) if high_str else None
-                if high:
-                    if high < 1000:
+                high = None
+                if high_str:
+                    high = float(high_str.replace(",", ""))
+                    if high_k:
                         high *= 1000
                     elif high < 500:
-                        high *= 2080
+                        high *= 2080  # Hourly to annual for high end too
 
-                if low >= 20000:  # Sanity check — must be at least plausible annual
+                # Sanity check: must look like annual salary
+                if low >= 20000:
                     return low, high
-            except ValueError:
+            except (ValueError, TypeError):
                 continue
 
         return None, None

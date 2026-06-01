@@ -15,6 +15,7 @@ class ScoreResult:
     quality_score: float
     signals: dict[str, float]
     explanation: str  # top-3 signals as human-readable string
+    keywords_matched: list[str]
 
 
 class ScoringEngine:
@@ -23,16 +24,20 @@ class ScoringEngine:
         self.priority_terms = [t.lower() for t in (priority_terms or [])]
 
     def score(self, job: Job) -> ScoreResult:
-        """Score a job for relevance and quality. Returns ScoreResult."""
-        relevance, signals = self._score_relevance(job)
-        quality = self._score_quality(job)
-        explanation = self._explain(signals)
+        """Score a job for relevance and quality. Returns ScoreResult.
 
+        Note: sets `job.keywords_matched` as a side-effect for downstream use by `FeedbackManager`.
+        """
+        relevance, signals, keywords_matched = self._score_relevance(job)
+        quality = self._score_quality(job)
+        # Set keywords_matched on the job for DB persistence and FeedbackManager
+        job.keywords_matched = keywords_matched
         return ScoreResult(
             relevance_score=round(min(100.0, max(0.0, relevance)), 1),
             quality_score=round(min(100.0, max(0.0, quality)), 1),
             signals=signals,
-            explanation=explanation,
+            explanation=self._explain(signals),
+            keywords_matched=keywords_matched,
         )
 
     def apply_feedback_multipliers(
@@ -62,7 +67,7 @@ class ScoringEngine:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _score_relevance(self, job: Job) -> tuple[float, dict[str, float]]:
+    def _score_relevance(self, job: Job) -> tuple[float, dict[str, float], list[str]]:
         signals: dict[str, float] = {}
         w = self.config.relevance_weights
         title_lower = job.title.lower()
@@ -102,7 +107,6 @@ class ScoringEngine:
         # --- Keyword density (count all domain keywords in description) ---
         all_keywords = [kw for b in self.config.domain_buckets.values() for kw in b.keywords]
         matched_kws = list({kw for kw in all_keywords if kw.lower() in desc_lower})
-        job.keywords_matched = matched_kws  # side-effect: annotate the job
         density = min(w.get("keyword_density", 25), len(matched_kws) * 2)
         if density > 0:
             signals["keyword_density"] = density
@@ -117,7 +121,7 @@ class ScoringEngine:
             signals["negative_signals"] = neg_score
 
         total = sum(signals.values())
-        return total, signals
+        return total, signals, matched_kws
 
     def _score_quality(self, job: Job) -> float:
         qw = self.config.quality_weights

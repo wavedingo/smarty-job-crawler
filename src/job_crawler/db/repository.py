@@ -254,6 +254,39 @@ def get_job(job_id: str, db_path: Path | None = None) -> Job | None:
         conn.close()
 
 
+def update_job_scores(
+    jobs: list,  # list[Job] — avoid circular import by using duck-typed list
+    db_path: Path | None = None,
+) -> None:
+    """Update relevance_score, quality_score, score_signals, keywords_matched,
+    possible_cross_site_duplicate, and updated_at for a list of jobs."""
+    if db_path is None:
+        db_path = get_db_path()
+    now = datetime.now(timezone.utc).isoformat()
+    conn = get_connection(db_path)
+    try:
+        conn.executemany(
+            """UPDATE jobs SET
+               relevance_score=?, quality_score=?, score_signals=?,
+               keywords_matched=?, possible_cross_site_duplicate=?, updated_at=?
+               WHERE job_id=?""",
+            [
+                (
+                    job.relevance_score, job.quality_score,
+                    json.dumps(job.score_signals),
+                    json.dumps(job.keywords_matched),
+                    1 if job.possible_cross_site_duplicate else 0,
+                    now,
+                    job.job_id,
+                )
+                for job in jobs
+            ],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def update_job_status(job_id: str, status: str, db_path: Path | None = None) -> None:
     if db_path is None:
         db_path = get_db_path()

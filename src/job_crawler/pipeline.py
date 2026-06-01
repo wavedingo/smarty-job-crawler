@@ -1,7 +1,6 @@
 """Pipeline: orchestrates the full run-search flow."""
 
 import asyncio
-import json
 import logging
 import sqlite3
 from dataclasses import dataclass, field
@@ -104,10 +103,12 @@ async def run_pipeline(
         result.jobs_fetched = len(all_raw)
 
         # ------------------------------------------------------------------
-        # Step 3: Normalize
+        # Step 3: Normalize — returns (Job, search_term) pairs
         # ------------------------------------------------------------------
         normalizer = Normalizer(config)
-        jobs = normalizer.normalize_many(all_raw)
+        pairs = normalizer.normalize_many(all_raw)
+        jobs = [j for j, _ in pairs]
+        job_search_terms: dict[str, str | None] = {j.job_id: st for j, st in pairs}
         logger.info("Normalized %d/%d raw results", len(jobs), len(all_raw))
 
         # ------------------------------------------------------------------
@@ -174,39 +175,32 @@ async def run_pipeline(
         # Step 7: Persist scores, term matches, term stats
         # ------------------------------------------------------------------
         if not dry_run:
-            db = db_path or repository.get_db_path()
-            with sqlite3.connect(str(db)) as conn:
-                for job in new_jobs:
-                    conn.execute(
-                        """
-                        UPDATE jobs
-                        SET relevance_score = ?,
-                            quality_score = ?,
-                            score_signals = ?,
-                            keywords_matched = ?,
-                            possible_cross_site_duplicate = ?,
-                            updated_at = ?
-                        WHERE job_id = ?
-                        """,
-                        (
-                            job.relevance_score,
-                            job.quality_score,
-                            json.dumps(job.score_signals),
-                            json.dumps(job.keywords_matched),
-                            1 if job.possible_cross_site_duplicate else 0,
-                            datetime.now(timezone.utc).isoformat(),
-                            job.job_id,
-                        ),
-                    )
-                conn.commit()
+            # Update scores via repository method (no raw SQL in pipeline)
+            if new_jobs:
+                repository.update_job_scores(new_jobs, db_path)
 
-            # Record term → job relationships
-            new_job_ids_list = [j.job_id for j in new_jobs]
-            term_ids = [t.id for t in all_terms if t.id is not None]
-            if new_job_ids_list and term_ids:
-                repository.record_job_term_matches(
-                    new_job_ids_list, term_ids, run_id, db_path
-                )
+            # Record term → job relationships (per search_term, not cartesian product)
+            # Build a mapping from term text → term_id
+            term_by_text: dict[str, int] = {
+                t.term: t.id for t in all_terms if t.id is not None
+            }
+            # For each new job, find which term surfaced it
+            job_to_term: list[tuple[str, int]] = []
+            for job in new_jobs:
+                term_text = job_search_terms.get(job.job_id)
+                if term_text and term_text in term_by_text:
+                    job_to_term.append((job.job_id, term_by_text[term_text]))
+
+            # Record matches individually (ATS adapters set search_term=None — omitted)
+            if job_to_term:
+                db = db_path or repository.get_db_path()
+                now = datetime.now(timezone.utc).isoformat()
+                with sqlite3.connect(str(db)) as conn:
+                    conn.executemany(
+                        "INSERT OR IGNORE INTO job_term_matches (job_id, term_id, run_id, created_at) VALUES (?,?,?,?)",
+                        [(jid, tid, run_id, now) for jid, tid in job_to_term],
+                    )
+                    conn.commit()
 
             # Update per-term stats
             for term in all_terms:
