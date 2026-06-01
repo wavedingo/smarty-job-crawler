@@ -118,5 +118,185 @@ def run_search(
         console.print(table)
 
 
+@app.command("list-results")
+def list_results(
+    limit: int = typer.Option(20, "--limit", "-n", help="Number of results to show"),
+    min_score: float = typer.Option(0.0, "--min-score", help="Minimum relevance score"),
+    status: str = typer.Option("", "--status", help="Filter by status (new, reviewed, saved, rejected, applied)"),
+    source: str = typer.Option("", "--source", help="Filter by source site"),
+    today: bool = typer.Option(False, "--today", help="Show only today's results"),
+):
+    """List job results from the database."""
+    from job_crawler.db import repository
+    from datetime import date
+
+    kwargs = dict(limit=limit, min_score=min_score)
+    if status:
+        kwargs["status"] = status
+    if source:
+        kwargs["source_site"] = source
+    if today:
+        kwargs["discovered_date"] = date.today().isoformat()
+
+    jobs = repository.get_jobs(**kwargs)
+
+    if not jobs:
+        console.print("[yellow]No jobs found matching the filters.[/yellow]")
+        return
+
+    table = Table(title=f"Job Results ({len(jobs)} shown)", show_header=True, header_style="bold")
+    table.add_column("Score", width=6, justify="right")
+    table.add_column("Title", width=38, no_wrap=True)
+    table.add_column("Company", width=22, no_wrap=True)
+    table.add_column("Location", width=18, no_wrap=True)
+    table.add_column("Salary", width=18)
+    table.add_column("Source", width=12, no_wrap=True)
+    table.add_column("Status", width=10)
+
+    for job in jobs:
+        # Color relevance score
+        score_str = f"{job.relevance_score:.0f}"
+        if job.relevance_score >= 70:
+            score_display = f"[green]{score_str}[/green]"
+        elif job.relevance_score >= 40:
+            score_display = f"[yellow]{score_str}[/yellow]"
+        else:
+            score_display = f"[red]{score_str}[/red]"
+
+        salary = ""
+        if job.salary_min and job.salary_max:
+            salary = f"${job.salary_min/1000:.0f}K–${job.salary_max/1000:.0f}K"
+        elif job.salary_min:
+            salary = f"${job.salary_min/1000:.0f}K+"
+
+        location = job.location or ""
+        if job.remote_status and job.remote_status.value != "unknown":
+            location = f"{location} ({job.remote_status.value})" if location else job.remote_status.value
+
+        table.add_row(
+            score_display,
+            job.title[:38],
+            job.company[:22],
+            location[:18],
+            salary,
+            job.source_site[:12],
+            job.status,
+        )
+
+    console.print(table)
+
+
+@app.command("give-feedback")
+def give_feedback(
+    job_id: str = typer.Argument(..., help="Job ID (from list-results)"),
+    feedback: str = typer.Argument(..., help="Feedback type: strong_fit, possible_fit, not_relevant, too_junior, too_technical, wrong_industry, wrong_location, compensation_issue, already_applied, save_for_later, duplicate"),
+    notes: str = typer.Option("", "--notes", "-n", help="Optional notes"),
+):
+    """Record feedback for a job."""
+    from job_crawler.feedback import FeedbackManager
+    from job_crawler.models import FeedbackType
+
+    try:
+        feedback_type = FeedbackType(feedback)
+    except ValueError:
+        valid = [t.value for t in FeedbackType]
+        console.print(f"[red]Invalid feedback type: {feedback!r}[/red]")
+        console.print(f"Valid types: {', '.join(valid)}")
+        raise typer.Exit(1)
+
+    mgr = FeedbackManager()
+    try:
+        mgr.record(job_id, feedback_type, notes or None)
+        console.print(f"[green]✓[/green] Feedback recorded: {feedback_type.value} for job {job_id}")
+    except Exception as e:
+        console.print(f"[red]Error recording feedback:[/red] {e}")
+        raise typer.Exit(1)
+
+
+@app.command("generate-report")
+def generate_report(
+    date_str: str = typer.Option("", "--date", help="Date in YYYY-MM-DD format (default: today)"),
+    top_n: int = typer.Option(30, "--top", help="Number of top jobs to include"),
+    min_score: float = typer.Option(0.0, "--min-score", help="Minimum relevance score"),
+    open_report: bool = typer.Option(False, "--open", help="Open the report in the default editor after generating"),
+):
+    """Generate a Markdown report for a given date."""
+    from job_crawler.report import generate_report as gen_report
+    from datetime import date
+    import subprocess
+
+    if date_str:
+        try:
+            report_date = date.fromisoformat(date_str)
+        except ValueError:
+            console.print(f"[red]Invalid date format: {date_str!r}. Use YYYY-MM-DD.[/red]")
+            raise typer.Exit(1)
+    else:
+        report_date = date.today()
+
+    try:
+        report_path = gen_report(report_date=report_date, top_n=top_n, min_score=min_score)
+        console.print(f"[green]✓[/green] Report written to: {report_path}")
+
+        if open_report:
+            subprocess.run(["open", str(report_path)], check=False)
+    except Exception as e:
+        console.print(f"[red]Error generating report:[/red] {e}")
+        raise typer.Exit(1)
+
+
+@app.command("term-stats")
+def term_stats(
+    limit: int = typer.Option(30, "--limit", "-n", help="Number of terms to show"),
+    bottom: bool = typer.Option(False, "--bottom", help="Show lowest-performing terms instead"),
+    category: str = typer.Option("", "--category", help="Filter by category"),
+):
+    """Show search term fitness scores and performance statistics."""
+    from job_crawler.db import repository
+
+    order = "fitness_score ASC" if bottom else "fitness_score DESC"
+    terms = repository.get_term_stats(limit=limit, order_by=order)
+
+    if category:
+        terms = [t for t in terms if t.get("category", "").lower() == category.lower()]
+
+    if not terms:
+        console.print("[yellow]No term stats found. Run `job-crawler run-search` first.[/yellow]")
+        return
+
+    table = Table(title="Search Term Fitness", show_header=True, header_style="bold")
+    table.add_column("Fitness", width=8, justify="right")
+    table.add_column("Term", width=40)
+    table.add_column("Category", width=20)
+    table.add_column("Runs", width=6, justify="right")
+    table.add_column("Jobs", width=6, justify="right")
+    table.add_column("+", width=4, justify="right")
+    table.add_column("-", width=4, justify="right")
+    table.add_column("Next Run", width=12)
+
+    for t in terms:
+        fitness = t.get("fitness_score", 0.5)
+        fitness_str = f"{fitness:.2f}"
+        if fitness >= 0.7:
+            fitness_display = f"[green]{fitness_str}[/green]"
+        elif fitness >= 0.4:
+            fitness_display = f"[yellow]{fitness_str}[/yellow]"
+        else:
+            fitness_display = f"[red]{fitness_str}[/red]"
+
+        table.add_row(
+            fitness_display,
+            t.get("term", "")[:40],
+            t.get("category", "")[:20],
+            str(t.get("times_run", 0)),
+            str(t.get("jobs_found", 0)),
+            str(t.get("feedback_positive", 0)),
+            str(t.get("feedback_negative", 0)),
+            t.get("next_run_date", "") or "Today",
+        )
+
+    console.print(table)
+
+
 if __name__ == "__main__":
     app()
