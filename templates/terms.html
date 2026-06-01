@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Term Fitness — Job Crawler{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Search Term Fitness</h4>
+  <div>
+    <a href="/terms?sort=desc" class="btn btn-sm {% if sort == 'desc' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Top &darr;</a>
+    <a href="/terms?sort=asc" class="btn btn-sm {% if sort == 'asc' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Bottom &uarr;</a>
+  </div>
+</div>
+<p class="text-muted small">
+  Fitness score reflects the quality of jobs surfaced by each term, based on your feedback.
+  Terms with score &ge; 0.70 run daily; 0.40&ndash;0.69 every 3 days; 0.20&ndash;0.39 weekly; &lt;0.20 biweekly.
+</p>
+{% if not terms %}
+<div class="alert alert-info">No terms yet. Run <code>job-crawler run-search</code> to seed the term table.</div>
+{% else %}
+<table class="table table-sm table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th style="width:70px">Fitness</th>
+      <th>Term</th>
+      <th style="width:160px">Category</th>
+      <th class="text-end" style="width:55px">Runs</th>
+      <th class="text-end" style="width:55px">Jobs</th>
+      <th class="text-end" style="width:40px" title="Positive feedback">+1</th>
+      <th class="text-end" style="width:40px" title="Negative feedback">-1</th>
+      <th style="width:110px">Next Run</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in terms %}
+    <tr>
+      <td>
+        {% set f = t.fitness_score | float %}
+        {% if f >= 0.70 %}<span class="badge bg-success">{{ "%.2f"|format(f) }}</span>
+        {% elif f >= 0.40 %}<span class="badge bg-warning text-dark">{{ "%.2f"|format(f) }}</span>
+        {% else %}<span class="badge bg-danger">{{ "%.2f"|format(f) }}</span>{% endif %}
+      </td>
+      <td><small>{{ t.term }}</small></td>
+      <td><small class="text-muted">{{ t.category or '&mdash;' }}</small></td>
+      <td class="text-end">{{ t.times_run }}</td>
+      <td class="text-end">{{ t.jobs_found }}</td>
+      <td class="text-end text-success">{{ t.feedback_positive }}</td>
+      <td class="text-end text-danger">{{ t.feedback_negative }}</td>
+      <td><small>{{ t.next_run_date or 'Today' }}</small></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Run History — Job Crawler{% endblock %}
+{% block content %}
+<h4 class="mb-3">Run History</h4>
+{% if not runs %}
+<div class="alert alert-info">No runs yet. Run <code>job-crawler run-search</code> to start.</div>
+{% else %}
+<table class="table table-sm table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th>Started</th>
+      <th>Status</th>
+      <th class="text-end">Fetched</th>
+      <th class="text-end">New</th>
+      <th class="text-end">Exact Dup</th>
+      <th class="text-end">Fuzzy Dup</th>
+      <th class="text-end">Terms</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for run in runs %}
+    <tr>
+      <td><small>{{ run.started_at[:19].replace('T',' ') }}</small></td>
+      <td>
+        {% if run.status == 'completed' %}<span class="badge bg-success">done</span>
+        {% elif run.status == 'running' %}<span class="badge bg-warning text-dark">running</span>
+        {% else %}<span class="badge bg-danger">{{ run.status }}</span>{% endif %}
+      </td>
+      <td class="text-end">{{ run.jobs_fetched }}</td>
+      <td class="text-end text-success fw-bold">{{ run.jobs_new }}</td>
+      <td class="text-end text-muted">{{ run.jobs_exact_dup }}</td>
+      <td class="text-end text-muted">{{ run.jobs_fuzzy_dup }}</td>
+      <td class="text-end">{{ run.terms_searched }}</td>
+      <td>
+        <small>
+          {% if run.sources_searched %}
+            {% if run.sources_searched | string | first == '[' %}
+              {{ run.sources_searched | from_json | join(", ") }}
+            {% else %}
+              {{ run.sources_searched }}
+            {% endif %}
+          {% endif %}
+        </small>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

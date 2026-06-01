@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}All Jobs — Job Crawler{% endblock %}
+{% block content %}
+<h4 class="mb-3">All Jobs</h4>
+
+<form class="row g-2 mb-3" method="get" action="/jobs">
+  <div class="col-auto">
+    <input class="form-control form-control-sm" type="text" name="q" value="{{ q }}" placeholder="Search title / company">
+  </div>
+  <div class="col-auto">
+    <select class="form-select form-select-sm" name="status">
+      <option value="">All statuses</option>
+      {% for s in statuses %}
+      <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <input class="form-control form-control-sm" type="number" name="min_score" value="{{ min_score }}" placeholder="Min score" style="width:100px">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-sm btn-primary" type="submit">Filter</button>
+    <a class="btn btn-sm btn-outline-secondary" href="/jobs">Reset</a>
+  </div>
+</form>
+
+{% if not jobs %}
+<div class="alert alert-info">No jobs match the current filters.</div>
+{% else %}
+<div class="table-responsive">
+<table class="table table-hover table-sm align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th style="width:55px">Score</th>
+      <th>Title / Company</th>
+      <th style="width:160px">Location</th>
+      <th style="width:130px">Salary</th>
+      <th style="width:90px">Source</th>
+      <th>Feedback</th>
+      <th style="width:90px">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+      {% set active_feedback = "" %}
+      {% include "partials/job_row.html" %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if jobs|length == 50 %}
+<a href="/jobs?page={{ page + 1 }}&q={{ q }}&status={{ status_filter }}&min_score={{ min_score }}" class="btn btn-outline-secondary btn-sm">Load more &rarr;</a>
+{% endif %}
+{% endif %}
+{% endblock %}

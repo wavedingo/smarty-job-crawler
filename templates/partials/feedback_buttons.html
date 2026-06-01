@@ -1,0 +1,11 @@
+<div class="d-flex flex-wrap gap-1" style="max-width:280px">
+  {% for ftype in ['strong_fit','possible_fit','save_for_later','not_relevant','too_junior','wrong_industry','already_applied'] %}
+  <button class="btn btn-outline-secondary feedback-btn{% if active_feedback == ftype %} active-feedback{% endif %}"
+          hx-post="/api/jobs/{{ job.job_id }}/feedback"
+          hx-vals='{"feedback_type": "{{ ftype }}"}'
+          hx-target="#job-{{ job.job_id }}"
+          hx-swap="outerHTML">
+    {{ ftype.replace('_', ' ') }}
+  </button>
+  {% endfor %}
+</div>

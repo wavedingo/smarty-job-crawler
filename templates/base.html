@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Job Crawler{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    body { background: #f8f9fa; }
+    .score-badge { font-size: 0.85rem; font-weight: 600; min-width: 38px; text-align: center; }
+    .job-title { font-weight: 600; }
+    .feedback-btn { font-size: 0.75rem; padding: 2px 7px; }
+    .feedback-btn.active-feedback { opacity: 0.5; }
+    nav .nav-link.active { font-weight: 600; }
+    .salary-tag { font-size: 0.8rem; color: #198754; }
+    .remote-tag { font-size: 0.75rem; }
+    .dup-warning { font-size: 0.75rem; color: #dc3545; }
+    .why-tooltip { cursor: help; border-bottom: 1px dashed #aaa; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">&#128269; Job Crawler</a>
+    <div class="navbar-nav">
+      <a class="nav-link {% if request.url.path == '/' %}active{% endif %}" href="/">Today</a>
+      <a class="nav-link {% if request.url.path == '/jobs' %}active{% endif %}" href="/jobs">All Jobs</a>
+      <a class="nav-link {% if request.url.path == '/runs' %}active{% endif %}" href="/runs">Runs</a>
+      <a class="nav-link {% if request.url.path == '/terms' %}active{% endif %}" href="/terms">Terms</a>
+    </div>
+    <button class="btn btn-sm btn-outline-light ms-auto"
+            hx-post="/api/run-search"
+            hx-target="#run-alert"
+            hx-swap="innerHTML">
+      &#9654; Run Now
+    </button>
+  </div>
+</nav>
+<div class="container-fluid px-4">
+  <div id="run-alert"></div>
+  {% block content %}{% endblock %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

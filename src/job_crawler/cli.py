@@ -305,5 +305,24 @@ def term_stats(
     console.print(table)
 
 
+@app.command("serve")
+def serve(
+    host: str = typer.Option("127.0.0.1", "--host", help="Host to bind to"),
+    port: int = typer.Option(8080, "--port", help="Port to listen on"),
+    reload: bool = typer.Option(False, "--reload", help="Enable auto-reload for development"),
+):
+    """Start the local web dashboard."""
+    import uvicorn
+    console.print(f"[bold green]Starting dashboard[/bold green] at http://{host}:{port}")
+    console.print("Press Ctrl+C to stop.")
+    uvicorn.run(
+        "job_crawler.server:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="warning",  # suppress uvicorn access logs in normal use
+    )
+
+
 if __name__ == "__main__":
     app()

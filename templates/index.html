@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Today's Jobs — Job Crawler{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Today's Jobs
+    <span class="badge bg-secondary">{{ jobs|length }}</span>
+  </h4>
+  <small class="text-muted">{{ today }}</small>
+</div>
+
+{% if not jobs %}
+<div class="alert alert-warning">
+  No jobs found today. Click <strong>&#9654; Run Now</strong> above or run <code>job-crawler run-search</code> from the terminal.
+</div>
+{% else %}
+<div class="table-responsive">
+<table class="table table-hover table-sm align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th style="width:55px">Score</th>
+      <th>Title / Company</th>
+      <th style="width:160px">Location</th>
+      <th style="width:130px">Salary</th>
+      <th style="width:90px">Source</th>
+      <th>Feedback</th>
+      <th style="width:90px">Status</th>
+    </tr>
+  </thead>
+  <tbody id="jobs-table-body">
+    {% for job in jobs %}
+      {% set active_feedback = "" %}
+      {% include "partials/job_row.html" %}
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if jobs|length == 50 %}
+<a href="/?page={{ page + 1 }}" class="btn btn-outline-secondary btn-sm">Load more &rarr;</a>
+{% endif %}
+{% endif %}
+{% endblock %}

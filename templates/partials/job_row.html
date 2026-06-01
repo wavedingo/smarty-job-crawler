@@ -1,0 +1,61 @@
+{% set active_feedback = active_feedback if active_feedback is defined else "" %}
+<tr id="job-{{ job.job_id }}"
+    {% if job.possible_cross_site_duplicate %}class="table-warning"{% endif %}>
+
+  {# Score badge #}
+  <td class="text-center">
+    <span class="badge score-badge bg-{{ score_color(job.relevance_score) }}">
+      {{ job.relevance_score | int }}
+    </span>
+  </td>
+
+  {# Title / Company #}
+  <td>
+    <div class="job-title">
+      {% if job.canonical_url or job.source_url %}
+        <a href="{{ job.canonical_url or job.source_url }}" target="_blank" rel="noopener">
+          {{ job.title }}
+        </a>
+      {% else %}
+        {{ job.title }}
+      {% endif %}
+      {% if job.possible_cross_site_duplicate %}
+        <span class="dup-warning ms-1" title="Possible cross-site duplicate">&#9888; dup</span>
+      {% endif %}
+    </div>
+    <small class="text-muted">{{ job.company }}</small>
+    {% set why = explain_signals(job.score_signals) %}
+    {% if why %}
+    <br><small class="why-tooltip text-secondary" title="{{ why }}">why?</small>
+    {% endif %}
+  </td>
+
+  {# Location #}
+  <td>
+    <small>{{ job.location or '&mdash;' }}</small>
+    {% if job.remote_status and job.remote_status.value != 'unknown' %}
+    <br><span class="badge bg-light text-dark remote-tag">{{ job.remote_status.value }}</span>
+    {% endif %}
+  </td>
+
+  {# Salary #}
+  <td class="salary-tag">{{ format_salary(job) or '&mdash;' }}</td>
+
+  {# Source #}
+  <td><small class="text-muted">{{ job.source_site }}</small></td>
+
+  {# Feedback buttons #}
+  <td>
+    {% include "partials/feedback_buttons.html" %}
+  </td>
+
+  {# Status #}
+  <td>
+    {% if job.status == 'new' or job.status.value == 'new' %}<span class="badge bg-secondary">new</span>
+    {% elif job.status == 'reviewed' or job.status.value == 'reviewed' %}<span class="badge bg-info text-dark">reviewed</span>
+    {% elif job.status == 'saved' or job.status.value == 'saved' %}<span class="badge bg-success">saved</span>
+    {% elif job.status == 'rejected' or job.status.value == 'rejected' %}<span class="badge bg-danger">rejected</span>
+    {% elif job.status == 'applied' or job.status.value == 'applied' %}<span class="badge bg-primary">applied</span>
+    {% else %}<span class="badge bg-light text-dark">{{ job.status }}</span>{% endif %}
+  </td>
+</tr>
