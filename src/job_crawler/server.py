@@ -53,14 +53,12 @@ def _explain_signals(score_signals) -> str:
         return ""
 
 
-# Register helpers as Jinja2 globals
-@app.on_event("startup")
-async def setup_template_globals():
-    templates.env.globals["format_salary"] = _format_salary
-    templates.env.globals["score_color"] = _score_color
-    templates.env.globals["explain_signals"] = _explain_signals
-    templates.env.globals["FeedbackType"] = FeedbackType
-    templates.env.filters["from_json"] = json.loads
+# Register helpers as Jinja2 globals (inline — no startup event needed)
+templates.env.globals["format_salary"] = _format_salary
+templates.env.globals["score_color"] = _score_color
+templates.env.globals["explain_signals"] = _explain_signals
+templates.env.globals["FeedbackType"] = FeedbackType
+templates.env.filters["from_json"] = json.loads
 
 
 # ─── Routes ──────────────────────────────────────────────────────────────────
