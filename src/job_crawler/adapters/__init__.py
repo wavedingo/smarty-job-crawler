@@ -6,6 +6,8 @@ from .greenhouse import GreenhouseAdapter
 from .lever import LeverAdapter
 from .dice import DiceAdapter
 from .ashby import AshbyAdapter
+from .perplexity import PerplexityAdapter
+from .playwright_openai import OpenAIPlaywrightAdapter
 from .wttj import WelcomeToTheJungleAdapter
 from .google_careers import GoogleCareersAdapter
 
@@ -16,6 +18,8 @@ ADAPTER_REGISTRY: dict[str, type[BaseAdapter]] = {
     "lever": LeverAdapter,
     "dice": DiceAdapter,
     "ashby": AshbyAdapter,
+    "perplexity": PerplexityAdapter,
+    "playwright_openai": OpenAIPlaywrightAdapter,
     "wttj": WelcomeToTheJungleAdapter,
     "google_careers": GoogleCareersAdapter,
 }

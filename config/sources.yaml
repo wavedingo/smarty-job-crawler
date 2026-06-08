@@ -12,22 +12,21 @@ sources:
       board_slug: anthropic
 
   openai:
-    adapter: ashby           # Ashby org_id confirmed valid; currently 0 open roles
+    adapter: playwright_openai   # DOM scraper — OpenAI has no accessible JSON API
     enabled: true
     config:
-      org_id: openai
+      careers_url: "https://openai.com/careers/search/"
 
   xai:
-    adapter: greenhouse      # xAI uses Greenhouse (verified working)
+    adapter: greenhouse          # xAI uses Greenhouse (verified working)
     enabled: true
     config:
       board_slug: xai
 
   perplexity:
-    adapter: ashby
+    adapter: perplexity          # Direct JSON API at /api/jobs (67 jobs)
     enabled: true
-    config:
-      org_id: perplexity    # Valid slug (HTTP 200), but currently 0 open roles
+    config: {}
 
   # ── Tier 1: Search-based APIs ─────────────────────────────────────────────
 
