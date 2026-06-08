@@ -12,8 +12,8 @@ sources:
       board_slug: anthropic
 
   openai:
-    adapter: ashby           # OpenAI moved from Greenhouse → Ashby in 2024
-    enabled: false           # TODO: confirm correct Ashby org_id (try: openai, openai-gpt)
+    adapter: ashby           # Ashby org_id confirmed valid; currently 0 open roles
+    enabled: true
     config:
       org_id: openai
 
@@ -27,7 +27,7 @@ sources:
     adapter: ashby
     enabled: true
     config:
-      org_id: perplexityai  # Ashby org_id (jobs.ashbyhq.com/perplexityai)
+      org_id: perplexity    # Valid slug (HTTP 200), but currently 0 open roles
 
   # ── Tier 1: Search-based APIs ─────────────────────────────────────────────
 
