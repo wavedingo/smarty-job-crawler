@@ -28,8 +28,8 @@ job-crawler = "job_crawler.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/job_crawler"]
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "pytest-cov>=6.0",
