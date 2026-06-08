@@ -5,6 +5,7 @@ from .indeed import IndeedAdapter
 from .greenhouse import GreenhouseAdapter
 from .lever import LeverAdapter
 from .dice import DiceAdapter
+from .ashby import AshbyAdapter
 from .wttj import WelcomeToTheJungleAdapter
 from .google_careers import GoogleCareersAdapter
 
@@ -14,6 +15,7 @@ ADAPTER_REGISTRY: dict[str, type[BaseAdapter]] = {
     "greenhouse": GreenhouseAdapter,
     "lever": LeverAdapter,
     "dice": DiceAdapter,
+    "ashby": AshbyAdapter,
     "wttj": WelcomeToTheJungleAdapter,
     "google_careers": GoogleCareersAdapter,
 }

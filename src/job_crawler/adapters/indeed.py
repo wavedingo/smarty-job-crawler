@@ -30,8 +30,16 @@ class IndeedAdapter(BaseAdapter):
             f"?q={quote_plus(term)}&l={quote_plus(location)}&sort=date&limit={limit}"
         )
 
+        # Indeed's RSS requires browser-like headers; plain bot UA gets 403
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.indeed.com/",
+        }
+
         try:
-            response = await client.get(url)
+            response = await client.get(url, headers=headers)
             response.raise_for_status()
         except Exception as e:
             logger.warning("[indeed] HTTP error for '%s': %s", term, e)

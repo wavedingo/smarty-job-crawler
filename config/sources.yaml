@@ -2,20 +2,8 @@ global:
   max_terms_per_run: 20
 
 sources:
-  indeed:
-    adapter: indeed
-    enabled: true
-    config:
-      results_per_query: 25
-      delay_seconds: 2.0
-      location: ""
 
-  dice:
-    adapter: dice
-    enabled: true
-    config:
-      results_per_query: 20
-      delay_seconds: 1.5
+  # ── Tier 1: ATS public APIs (most reliable) ───────────────────────────────
 
   anthropic:
     adapter: greenhouse
@@ -24,25 +12,75 @@ sources:
       board_slug: anthropic
 
   openai:
-    adapter: greenhouse
-    enabled: true
+    adapter: ashby           # OpenAI moved from Greenhouse → Ashby in 2024
+    enabled: false           # TODO: confirm correct Ashby org_id (try: openai, openai-gpt)
     config:
-      board_slug: openai
+      org_id: openai
 
   xai:
-    adapter: lever
+    adapter: greenhouse      # xAI uses Greenhouse (verified working)
     enabled: true
     config:
-      company_slug: xai
+      board_slug: xai
+
+  perplexity:
+    adapter: ashby
+    enabled: true
+    config:
+      org_id: perplexityai  # Ashby org_id (jobs.ashbyhq.com/perplexityai)
+
+  # ── Tier 1: Search-based APIs ─────────────────────────────────────────────
+
+  indeed:
+    adapter: indeed
+    enabled: false           # Fully blocked (403/404) regardless of headers
+    config:
+      results_per_query: 25
+      delay_seconds: 3.0
+      location: ""
+
+  # ── Disabled: blocked or endpoint gone ────────────────────────────────────
+
+  dice:
+    adapter: dice
+    enabled: false           # 403 — undocumented internal API now blocked
+    config:
+      results_per_query: 20
+      delay_seconds: 1.5
 
   welcome_to_the_jungle:
     adapter: wttj
-    enabled: true
+    enabled: false           # 404 — API endpoint changed
     config:
       delay_seconds: 2.0
 
   google_careers:
     adapter: google_careers
-    enabled: true
+    enabled: false           # 404 — undocumented endpoint no longer valid
     config:
       delay_seconds: 3.0
+
+  # ── Template: add more Greenhouse/Ashby companies here ────────────────────
+  # Find a company's Greenhouse slug from their jobs URL:
+  #   https://boards.greenhouse.io/{slug} or https://job-boards.greenhouse.io/{slug}
+  # Find Ashby org_id from: https://jobs.ashbyhq.com/{org_id}
+  #
+  # Examples (uncomment to enable):
+  #
+  # shopify:
+  #   adapter: greenhouse
+  #   enabled: false
+  #   config:
+  #     board_slug: shopify
+  #
+  # klaviyo:
+  #   adapter: greenhouse
+  #   enabled: false
+  #   config:
+  #     board_slug: klaviyo
+  #
+  # notion:
+  #   adapter: ashby
+  #   enabled: false
+  #   config:
+  #     org_id: notion
